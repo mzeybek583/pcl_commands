@@ -1,7 +1,8 @@
 //
-//veri PCL komut satiri ile yukle
-int
-  main (int argc, char** argv)
+// PCL data import with command line for registration
+
+
+int main (int argc, char** argv)
 {
   if (argc < 3)
   {
