@@ -1,0 +1,44 @@
+/* Load library
+
+*/
+#include <pcl/io/pcd_io.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/features/rsd.h>
+#include <pcl/filters/extract_indices.h>
+
+int
+main(int argc, char** argv)
+{
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>); 	// Object for storing the point cloud.
+	pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>); 	// Object for storing the normals.
+	pcl::PointCloud<pcl::PrincipalRadiiRSD>::Ptr descriptors (new pcl::PointCloud<pcl::PrincipalRadiiRSD>());	// Object for storing the RSD descriptors for each point.
+
+
+	if (pcl::io::loadPCDFile<pcl::PointXYZ>(argv[1], *cloud) != 0)	// Read a PCD file from disk with command.
+	{
+		return -1;
+	}
+
+	//Downsample here !!!!!!!!!!!!!!!!!
+
+	// Estimate the normals.
+	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr kdtree(new pcl::search::KdTree<pcl::PointXYZ>);
+
+	ne.setInputCloud(cloud);
+	ne.setRadiusSearch(0.03);
+	ne.setSearchMethod(kdtree);
+	ne.compute(*normals);
+
+	// RSD estimation object.
+	pcl::RSDEstimation<pcl::PointXYZ, pcl::Normal, pcl::PrincipalRadiiRSD> rsd;
+	rsd.setInputCloud(cloud);
+	rsd.setInputNormals(normals);
+	rsd.setSearchMethod(kdtree);
+	
+	rsd.setRadiusSearch(0.05);// Search radius, to look for neighbors. Note: the value given here has to be larger than the radius used to estimate the normals. Plane radius. Any radius larger than this is considered infinite (a plane).
+	rsd.setPlaneRadius(0.1);
+  rsd.setSaveHistograms(false); // Do we want to save the full distance-angle histograms?
+	rsd.compute(*descriptors);
+
+}
